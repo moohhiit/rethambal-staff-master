@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "312535654040",
+    "project_id": "rethamabal",
+    "storage_bucket": "rethamabal.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:312535654040:android:5ea24b6d1742313fca3aed",
+        "android_client_info": {
+          "package_name": "com.rethambal_staff"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBppcBg5XgCNz7FGAokgpMGheVyV-qHJbI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -22,6 +22,9 @@ jobs:
         run: |
           echo "🚀 Starting optimized sync with cleaning..."
 
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
           # Clone GitLab repo outside workspace
           git clone https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} ../gitlab-repo
           cd ../gitlab-repo
@@ -68,10 +71,7 @@ jobs:
             --exclude-from="$GITHUB_WORKSPACE/.syncignore" \
             $GITHUB_WORKSPACE/ ./
 
-          # Git config
-          git config user.name "Sync Bot"
-          git config user.email "sync-bot@example.com"
-
+         
           git add .
 
           if git diff --cached --quiet; then

@@ -1,0 +1,6 @@
+README.md
+android/*
+ios/*
+app.json
+services/supabase.ts
+

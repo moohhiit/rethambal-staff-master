@@ -34,8 +34,11 @@ jobs:
           # Initialize fresh repo
           git init
           git branch -M main
-          git remote add origin https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO}
+          git remote set-url origin https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} 
 
+          git remote -v
+
+          
           git config user.name "Sync Bot"
           git config user.email "sync-bot@example.com"
 

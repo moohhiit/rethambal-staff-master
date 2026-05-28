@@ -15,8 +15,8 @@ jobs:
 
       - name: Sync to GitLab
         env:
-          GITLAB_REPO: gitlab.com/moohhiit/rethambal-slave.git
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+            GITLAB_REPO: ${{ secrets.GITLAB_REPO_URL }}
+            GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
           echo " Starting sync..."
 

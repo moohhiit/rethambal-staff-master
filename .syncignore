@@ -3,4 +3,5 @@ android/*
 ios/*
 app.json
 services/supabase.ts
-
+.github/*
+.syncignore

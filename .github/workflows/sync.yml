@@ -1,0 +1,38 @@
+name: Sync to GitLab Slaves
+
+on:
+  push:
+    branches:
+      - main   
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout master repo
+      - name: Checkout master
+        uses: actions/checkout@v4
+
+      # 2. Install rsync
+      - name: Install rsync
+        run: sudo apt-get install -y rsync
+
+      # 3. Sync to child repo (GitLab)
+      - name: Sync files to GitLab repo
+        env:
+          GITLAB_REPO: ${{ secrets.GITLAB_REPO_URL }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+        run: |
+          # Clone child repo
+          git clone https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} child-repo
+          
+          # Rsync with ignore list
+          rsync -av --exclude-from='.syncignore' ./ child-repo/
+          
+          cd child-repo
+          git config user.name "GitHub Sync Bot"
+          git config user.email "sync-bot@example.com"
+          git add .
+          git commit -m "Sync from master (ignoring restricted files)" || echo "No changes"
+          git push origin main

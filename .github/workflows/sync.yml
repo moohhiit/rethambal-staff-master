@@ -17,7 +17,7 @@ jobs:
 
       - name: Sync to GitLab
         env:
-          GITLAB_REPO: ${{secrets.GITLAB_REPO_URL}}
+          GITLAB_REPO: ${{ secrets.GITLAB_REPO_URL }}
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
           echo "🚀 Starting clean sync..."
@@ -26,19 +26,9 @@ jobs:
           git clone https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} ../gitlab-repo
           cd ../gitlab-repo
 
-          # ✅ FIX: set git config AFTER entering repo
+          # Git identity (MUST here)
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-
-          # Add GitHub as remote
-          git remote add github $GITHUB_SERVER_URL/$GITHUB_REPOSITORY || true
-          git fetch github
-
-          # Checkout main branch
-          git checkout main
-
-          # Merge GitHub changes (incremental)
-          git merge github/main -X theirs --allow-unrelated-histories -m "🔄 Sync from GitHub"
 
           echo "🧹 Cleaning unwanted files..."
 
@@ -59,17 +49,22 @@ jobs:
           # Remove empty directories
           find . -type d -empty -delete
 
-          # Sync files (only allowed ones)
+          echo "📦 Syncing files from GitHub..."
+
+          # 🔥 MAIN FIX: Only rsync (NO MERGE)
           rsync -av --delete \
             --exclude-from="$GITHUB_WORKSPACE/.syncignore" \
             $GITHUB_WORKSPACE/ ./
 
           git add .
 
+          # Debug (optional but useful)
+          git status
+
           if git diff --cached --quiet; then
-            echo "✅ No changes to commit"
+            echo "❌ No changes detected"
           else
-            git commit -m "🚀 Sync + Clean from GitHub"
+            git commit -m "🚀 Sync from GitHub"
             git push origin main
           fi
 

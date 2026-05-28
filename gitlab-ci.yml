@@ -1,0 +1,59 @@
+stages:
+  - install
+  - build
+
+variables:
+  ANDROID_COMPILE_SDK: "34"
+  ANDROID_BUILD_TOOLS: "34.0.0"
+  ANDROID_SDK_ROOT: "$CI_PROJECT_DIR/android-sdk"
+  JAVA_HOME: "/usr/lib/jvm/java-17-openjdk-amd64"
+
+# ── Install dependencies ───────────────────────────────
+install_dependencies:
+  stage: install
+  image: node:20-bullseye
+  script:
+    - npm ci
+  cache:
+    key: node-modules-cache
+    paths:
+      - node_modules/
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 day
+
+# ── Build APK ──────────────────────────────────────────
+build_apk:
+  stage: build
+  image: node:20-bullseye
+  script:
+    - apt-get update -y
+    - apt-get install -y openjdk-17-jdk wget unzip curl git
+    # Android SDK setup
+    - mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+    - wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O sdk.zip
+    - unzip -q sdk.zip -d $ANDROID_SDK_ROOT/cmdline-tools
+    - mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+    - rm sdk.zip
+    - export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
+    - yes | sdkmanager --licenses || true
+    - sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+    # Verify Node setup
+    - node -v
+    - npm -v
+    - npx react-native config
+    # Build APK
+    - cd android
+    - chmod +x gradlew
+    - ./gradlew assembleRelease --stacktrace --warning-mode all
+    # ✅ Use absolute path so the APK lands exactly where artifacts expects it
+    - cp app/build/outputs/apk/release/app-release.apk $CI_PROJECT_DIR/android/${CI_PROJECT_NAME}-v${CI_PIPELINE_IID}-${CI_COMMIT_SHORT_SHA}.apk
+  cache:
+    key: gradle-cache
+    paths:
+      - android/.gradle/   # ✅ fixed: was .gradle/ (wrong root)
+  artifacts:
+    paths:
+      - android/${CI_PROJECT_NAME}-v${CI_PIPELINE_IID}-${CI_COMMIT_SHORT_SHA}.apk
+    expire_in: 7 days

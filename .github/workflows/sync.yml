@@ -1,38 +1,52 @@
-name: Sync to GitLab Slaves
+name: Sync GitHub to GitLab
 
 on:
   push:
     branches:
-      - main   
+      - main  
 
 jobs:
   sync:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout master repo
-      - name: Checkout master
+      - name: Checkout GitHub Repo
         uses: actions/checkout@v4
 
-      # 2. Install rsync
-      - name: Install rsync
-        run: sudo apt-get install -y rsync
-
-      # 3. Sync to child repo (GitLab)
-      - name: Sync files to GitLab repo
+      - name: Sync to GitLab
         env:
-          GITLAB_REPO: ${{ secrets.GITLAB_REPO_URL }}
+          GITLAB_REPO: gitlab.com/moohhiit/rethambal-slave.git
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
-          # Clone child repo
-          git clone https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} child-repo
-          
-          # Rsync with ignore list
-          rsync -av --exclude-from='.syncignore' ./ child-repo/
-          
-          cd child-repo
-          git config user.name "GitHub Sync Bot"
+          echo " Starting sync..."
+
+          # Clone GitLab repo
+          git clone https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} gitlab-repo
+
+          # Remove .git to avoid submodule issue
+          rm -rf gitlab-repo/.git
+
+          # Copy files (respect .syncignore)
+          rsync -av --delete --exclude-from='.syncignore' ./ gitlab-repo/
+
+          cd gitlab-repo
+
+          # Initialize fresh repo
+          git init
+          git branch -M main
+          git remote add origin https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO}
+
+          git config user.name "Sync Bot"
           git config user.email "sync-bot@example.com"
+
           git add .
-          git commit -m "Sync from master (ignoring restricted files)" || echo "No changes"
-          git push origin main
+
+          # Commit only if changes exist
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-sync from GitHub"
+            git push origin main --force
+          fi
+
+          echo "🎉 Sync completed!"

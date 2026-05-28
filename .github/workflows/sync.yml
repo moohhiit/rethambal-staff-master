@@ -1,4 +1,4 @@
-name: Sync GitHub to GitLab (Optimized + Clean)
+name: Sync GitHub to GitLab (Final Stable)
 
 on:
   push:
@@ -17,68 +17,60 @@ jobs:
 
       - name: Sync to GitLab
         env:
-            GITLAB_REPO: ${{ secrets.GITLAB_REPO_URL }}
-            GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_REPO: gitlab.com/moohhiit/rethambal-slave.git
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
-          echo "🚀 Starting optimized sync with cleaning..."
+          echo "🚀 Starting clean sync..."
 
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-
-          # Clone GitLab repo outside workspace
+          # Clone GitLab repo OUTSIDE workspace
           git clone https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} ../gitlab-repo
           cd ../gitlab-repo
 
-          # Ensure full history
-          git fetch --unshallow || true
+          # ✅ FIX: set git config AFTER entering repo
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
 
           # Add GitHub as remote
           git remote add github $GITHUB_SERVER_URL/$GITHUB_REPOSITORY || true
           git fetch github
 
+          # Checkout main branch
           git checkout main
 
-          # Merge changes (GitHub wins)
+          # Merge GitHub changes (incremental)
           git merge github/main -X theirs --allow-unrelated-histories -m "🔄 Sync from GitHub"
-
-          # =========================
-          # 🔥 CLEANING STEP START
-          # =========================
 
           echo "🧹 Cleaning unwanted files..."
 
-          # Remove ignored tracked files (IMPORTANT)
+          # Remove ignored tracked files
           if [ -f "$GITHUB_WORKSPACE/.syncignore" ]; then
             while read pattern; do
-              git rm -r --cached "$pattern" 2>/dev/null || true
+              [ -n "$pattern" ] && git rm -r --cached "$pattern" 2>/dev/null || true
             done < "$GITHUB_WORKSPACE/.syncignore"
           fi
-         
-          rm -rf gitlab-repo
-          # Extra safety cleanup
+
+          # Extra cleanup
           git rm -r --cached .github 2>/dev/null || true
           git rm -r --cached gitlab-repo 2>/dev/null || true
 
-          # Remove empty dirs (optional cleanup)
+          # Remove nested folder physically
+          rm -rf gitlab-repo
+
+          # Remove empty directories
           find . -type d -empty -delete
 
-          # =========================
-          # 🔥 CLEANING STEP END
-          # =========================
-
-          # Apply rsync (sync only allowed files)
+          # Sync files (only allowed ones)
           rsync -av --delete \
             --exclude-from="$GITHUB_WORKSPACE/.syncignore" \
             $GITHUB_WORKSPACE/ ./
 
-         
           git add .
 
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "✅ No changes to commit"
           else
             git commit -m "🚀 Sync + Clean from GitHub"
-            git push origin main --force
+            git push origin main
           fi
 
-          echo "🎉 Sync + Clean completed!"
+          echo "🎉 Sync completed successfully!"

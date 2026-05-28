@@ -1,9 +1,9 @@
-name: Sync GitHub to GitLab
+name: Sync GitHub to GitLab (Optimized + Clean)
 
 on:
   push:
     branches:
-      - main  
+      - main
 
 jobs:
   sync:
@@ -12,44 +12,73 @@ jobs:
     steps:
       - name: Checkout GitHub Repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Sync to GitLab
         env:
             GITLAB_REPO: ${{ secrets.GITLAB_REPO_URL }}
             GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
-          echo " Starting sync..."
+          echo "🚀 Starting optimized sync with cleaning..."
 
-          # Clone GitLab repo
-          git clone https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} gitlab-repo
+          # Clone GitLab repo outside workspace
+          git clone https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} ../gitlab-repo
+          cd ../gitlab-repo
 
-          # Remove .git to avoid submodule issue
-          rm -rf gitlab-repo/.git
+          # Ensure full history
+          git fetch --unshallow || true
 
-          # Copy files (respect .syncignore)
-          rsync -av --delete --exclude-from='.syncignore' ./ gitlab-repo/
+          # Add GitHub as remote
+          git remote add github $GITHUB_SERVER_URL/$GITHUB_REPOSITORY || true
+          git fetch github
 
-          cd gitlab-repo
+          git checkout main
 
-          # Initialize fresh repo
-          git init
-          git branch -M main
-          git remote set-url origin https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} 
+          # Merge changes (GitHub wins)
+          git merge github/main -X theirs --allow-unrelated-histories -m "🔄 Sync from GitHub"
 
-          git remote -v
+          # =========================
+          # 🔥 CLEANING STEP START
+          # =========================
 
-          
+          echo "🧹 Cleaning unwanted files..."
+
+          # Remove ignored tracked files (IMPORTANT)
+          if [ -f "$GITHUB_WORKSPACE/.syncignore" ]; then
+            while read pattern; do
+              git rm -r --cached "$pattern" 2>/dev/null || true
+            done < "$GITHUB_WORKSPACE/.syncignore"
+          fi
+         
+          rm -rf gitlab-repo
+          # Extra safety cleanup
+          git rm -r --cached .github 2>/dev/null || true
+          git rm -r --cached gitlab-repo 2>/dev/null || true
+
+          # Remove empty dirs (optional cleanup)
+          find . -type d -empty -delete
+
+          # =========================
+          # 🔥 CLEANING STEP END
+          # =========================
+
+          # Apply rsync (sync only allowed files)
+          rsync -av --delete \
+            --exclude-from="$GITHUB_WORKSPACE/.syncignore" \
+            $GITHUB_WORKSPACE/ ./
+
+          # Git config
           git config user.name "Sync Bot"
           git config user.email "sync-bot@example.com"
 
           git add .
 
-          # Commit only if changes exist
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "✅ No changes to commit"
           else
-            git commit -m "Auto-sync from GitHub"
-            git push origin main --force
+            git commit -m "🚀 Sync + Clean from GitHub"
+            git push origin main
           fi
 
-          echo "🎉 Sync completed!"
+          echo "🎉 Sync + Clean completed!"

@@ -1,7 +1,9 @@
-README.md
-android/*
-ios/*
-app.json
-services/supabase.ts
-.github/*
-.syncignore
+.git
+.github
+gitlab-repo
+node_modules
+android
+ios
+.env
+dist
+build

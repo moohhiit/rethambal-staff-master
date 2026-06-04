@@ -58,10 +58,12 @@ const App: React.FC = () => {
 
     return unsubscribe;
   };
+  // Changing This is My Root Caused 
 
   return (
     <SafeAreaProvider>
       <AuthProvider>
+        
         {/* <AppProvider> */}
           <NavigationContainer>
             <StatusBar

@@ -19,54 +19,57 @@ jobs:
         run: |
           echo "🚀 Smart Sync Started..."
 
+          # Capture absolute workspace path BEFORE any cd
+          WORKSPACE="$GITHUB_WORKSPACE"
+          CLEAN_DIR="$WORKSPACE/../clean"
+          GITLAB_DIR="$WORKSPACE/../gitlab-repo"
+
           # =========================
           # STEP 1: PREPARE CLEAN SNAPSHOT
           # =========================
-          mkdir clean
+          mkdir -p "$CLEAN_DIR"
 
           rsync -av \
             --exclude='.git' \
-            --exclude-from=".syncignore" \
-            ./ clean/
+            --exclude-from="$WORKSPACE/.syncignore" \
+            "$WORKSPACE/" "$CLEAN_DIR/"
 
-          # Remove .git just in case (belt + suspenders)
-          rm -rf clean/.git
+          rm -rf "$CLEAN_DIR/.git"
           echo "✅ Clean snapshot ready"
 
           # =========================
           # STEP 2: CLONE GITLAB
           # =========================
-          # Strip any leading https:// from the secret so we don't double it
           GITLAB_HOST="${GITLAB_REPO#https://}"
-
-          git clone "https://oauth2:${GITLAB_TOKEN}@${GITLAB_HOST}" ../gitlab-repo
-          cd ../gitlab-repo
+          git clone "https://oauth2:${GITLAB_TOKEN}@${GITLAB_HOST}" "$GITLAB_DIR"
 
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
 
           # =========================
-          # STEP 3: CLEAN GITLAB (only tracked ignored files)
+          # STEP 3: CLEAN IGNORED FILES FROM GITLAB
           # =========================
           echo "🧹 Cleaning ignored files from GitLab..."
-          if [ -f "$GITHUB_WORKSPACE/.syncignore" ]; then
+          cd "$GITLAB_DIR"
+
+          if [ -f "$WORKSPACE/.syncignore" ]; then
             while IFS= read -r pattern; do
-              # Skip blank lines and comments
               [[ -z "$pattern" || "$pattern" == \#* ]] && continue
               git rm -r --cached --ignore-unmatch "$pattern" 2>/dev/null || true
-            done < "$GITHUB_WORKSPACE/.syncignore"
+            done < "$WORKSPACE/.syncignore"
           fi
 
           # =========================
-          # STEP 4: APPLY NEW SNAPSHOT (preserve GitLab-only files)
+          # STEP 4: APPLY NEW SNAPSHOT
           # =========================
           echo "📦 Applying filtered files..."
-          # No --delete: keeps files that exist only on GitLab
-          rsync -av ../clean/ ./
+          # Use absolute paths — no relative ../clean confusion
+          rsync -av "$CLEAN_DIR/" "$GITLAB_DIR/"
 
           # =========================
           # STEP 5: COMMIT ONLY IF CHANGES
           # =========================
+          cd "$GITLAB_DIR"
           git add .
           if git diff --cached --quiet; then
             echo "❌ No changes detected"

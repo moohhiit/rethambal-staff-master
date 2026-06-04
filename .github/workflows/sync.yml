@@ -1,16 +1,12 @@
 name: Smart Sync (Independent + Filtered)
-
 on:
   push:
     branches:
       - main
-
 jobs:
   sync:
     runs-on: ubuntu-latest
-
     steps:
-      # ✅ Step 1: Checkout GitHub
       - name: Checkout GitHub Repo
         uses: actions/checkout@v4
         with:
@@ -24,54 +20,54 @@ jobs:
           echo "🚀 Smart Sync Started..."
 
           # =========================
-          # 🔥 STEP 1: PREPARE CLEAN SNAPSHOT
+          # STEP 1: PREPARE CLEAN SNAPSHOT
           # =========================
           mkdir clean
-          
+
           rsync -av \
+            --exclude='.git' \
             --exclude-from=".syncignore" \
             ./ clean/
 
-          cd clean
-
-          # Remove .git (important for independent history)
-          rm -rf .git
-
+          # Remove .git just in case (belt + suspenders)
+          rm -rf clean/.git
           echo "✅ Clean snapshot ready"
 
           # =========================
-          # 🔥 STEP 2: CLONE GITLAB
+          # STEP 2: CLONE GITLAB
           # =========================
-          git clone https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} ../gitlab-repo
+          # Strip any leading https:// from the secret so we don't double it
+          GITLAB_HOST="${GITLAB_REPO#https://}"
+
+          git clone "https://oauth2:${GITLAB_TOKEN}@${GITLAB_HOST}" ../gitlab-repo
           cd ../gitlab-repo
 
-          # Git identity
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
 
           # =========================
-          # 🔥 STEP 3: CLEAN GITLAB (only tracked unwanted)
+          # STEP 3: CLEAN GITLAB (only tracked ignored files)
           # =========================
-          echo "🧹 Cleaning GitLab repo..."
-
+          echo "🧹 Cleaning ignored files from GitLab..."
           if [ -f "$GITHUB_WORKSPACE/.syncignore" ]; then
-            while read pattern; do
-              [ -n "$pattern" ] && git rm -r --cached "$pattern" 2>/dev/null || true
+            while IFS= read -r pattern; do
+              # Skip blank lines and comments
+              [[ -z "$pattern" || "$pattern" == \#* ]] && continue
+              git rm -r --cached --ignore-unmatch "$pattern" 2>/dev/null || true
             done < "$GITHUB_WORKSPACE/.syncignore"
           fi
 
           # =========================
-          # 🔥 STEP 4: APPLY NEW SNAPSHOT
+          # STEP 4: APPLY NEW SNAPSHOT (preserve GitLab-only files)
           # =========================
           echo "📦 Applying filtered files..."
-
-          rsync -av --delete ../clean/ ./
+          # No --delete: keeps files that exist only on GitLab
+          rsync -av ../clean/ ./
 
           # =========================
-          # 🔥 STEP 5: COMMIT ONLY IF CHANGE
+          # STEP 5: COMMIT ONLY IF CHANGES
           # =========================
           git add .
-
           if git diff --cached --quiet; then
             echo "❌ No changes detected"
           else

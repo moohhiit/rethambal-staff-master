@@ -1,4 +1,4 @@
-name: Sync GitHub to GitLab (Final Stable)
+name: Smart Sync (Independent + Filtered)
 
 on:
   push:
@@ -10,62 +10,73 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ✅ Step 1: Checkout GitHub
       - name: Checkout GitHub Repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Sync to GitLab
+      - name: Smart Sync to GitLab
         env:
           GITLAB_REPO: ${{ secrets.GITLAB_REPO_URL }}
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
-          echo "🚀 Starting clean sync..."
+          echo "🚀 Smart Sync Started..."
 
-          # Clone GitLab repo OUTSIDE workspace
+          # =========================
+          # 🔥 STEP 1: PREPARE CLEAN SNAPSHOT
+          # =========================
+          mkdir clean
+          
+          rsync -av \
+            --exclude-from=".syncignore" \
+            ./ clean/
+
+          cd clean
+
+          # Remove .git (important for independent history)
+          rm -rf .git
+
+          echo "✅ Clean snapshot ready"
+
+          # =========================
+          # 🔥 STEP 2: CLONE GITLAB
+          # =========================
           git clone https://oauth2:${GITLAB_TOKEN}@${GITLAB_REPO} ../gitlab-repo
           cd ../gitlab-repo
 
-          # Git identity (MUST here)
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
+          # Git identity
+          git config user.name "GitHub Sync Bot"
+          git config user.email "sync-bot@example.com"
 
-          echo "🧹 Cleaning unwanted files..."
+          # =========================
+          # 🔥 STEP 3: CLEAN GITLAB (only tracked unwanted)
+          # =========================
+          echo "🧹 Cleaning GitLab repo..."
 
-          # Remove ignored tracked files
           if [ -f "$GITHUB_WORKSPACE/.syncignore" ]; then
             while read pattern; do
               [ -n "$pattern" ] && git rm -r --cached "$pattern" 2>/dev/null || true
             done < "$GITHUB_WORKSPACE/.syncignore"
           fi
 
-          # Extra cleanup
-          git rm -r --cached .github 2>/dev/null || true
-          git rm -r --cached gitlab-repo 2>/dev/null || true
+          # =========================
+          # 🔥 STEP 4: APPLY NEW SNAPSHOT
+          # =========================
+          echo "📦 Applying filtered files..."
 
-          # Remove nested folder physically
-          rm -rf gitlab-repo
+          rsync -av --delete ../clean/ ./
 
-          # Remove empty directories
-          find . -type d -empty -delete
-
-          echo "📦 Syncing files from GitHub..."
-
-          # 🔥 MAIN FIX: Only rsync (NO MERGE)
-          rsync -av --delete \
-            --exclude-from="$GITHUB_WORKSPACE/.syncignore" \
-            $GITHUB_WORKSPACE/ ./
-
+          # =========================
+          # 🔥 STEP 5: COMMIT ONLY IF CHANGE
+          # =========================
           git add .
-
-          # Debug (optional but useful)
-          git status
 
           if git diff --cached --quiet; then
             echo "❌ No changes detected"
           else
-            git commit -m "🚀 Sync from GitHub"
+            git commit -m "🚀 Smart Sync (filtered files only)"
             git push origin main
           fi
 
-          echo "🎉 Sync completed successfully!"
+          echo "🎉 Smart Sync Completed!"

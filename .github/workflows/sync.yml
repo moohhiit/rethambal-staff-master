@@ -46,8 +46,8 @@ jobs:
           cd ../gitlab-repo
 
           # Git identity
-          git config user.name "GitHub Sync Bot"
-          git config user.email "sync-bot@example.com"
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
 
           # =========================
           # 🔥 STEP 3: CLEAN GITLAB (only tracked unwanted)

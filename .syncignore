@@ -7,3 +7,5 @@ ios
 .env
 dist
 build
+app.json
+client

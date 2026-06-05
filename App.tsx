@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar, Platform, PermissionsAndroid } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
-import StackNavigation from './Navigation/RootNavigator';
 import RootNavigator from './Navigation/RootNavigator';
 import { AuthProvider } from './Contexts/AuthContext';
 // import { AppProvider } from './Contexts/AppContext';
@@ -58,7 +57,7 @@ const App: React.FC = () => {
 
     return unsubscribe;
   };
-  // Changing This is My Root Caused 
+ 
 
   return (
     <SafeAreaProvider>

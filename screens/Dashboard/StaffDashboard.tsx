@@ -17,6 +17,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../services/supabase';
 import { useNavigation } from '@react-navigation/native';
 
+import clintdata from "../../client/clienttinfo.json"
+
+
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 52) / 2;
 
@@ -664,7 +667,7 @@ const styles = StyleSheet.create({
 
   // ── Hero ─────────────────────────────────────────────────────────────────
   hero: {
-    backgroundColor: '#1e3a8a',
+    backgroundColor: clintdata.style.color.background,
     paddingBottom: 0,
     paddingHorizontal: 20,
   },

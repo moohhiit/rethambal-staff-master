@@ -19,6 +19,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
 import { supabase } from '../../services/supabase';
 import { CommonActions } from '@react-navigation/native';
+import DeviceInfo from 'react-native-device-info';
+
+import data from "../../client/clienttinfo.json"
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -51,21 +55,21 @@ interface UserData {
 
 // Available roles (excluding student)
 const AVAILABLE_ROLES = [
-  { value: 'super_admin', label: 'Super Admin', icon: '👑' },
-  { value: 'admin', label: 'Admin', icon: '⚙️' },
-  { value: 'principal', label: 'Principal', icon: '🎓' },
+  // { value: 'super_admin', label: 'Super Admin', icon: '👑' },
+  // { value: 'admin', label: 'Admin', icon: '⚙️' },
+  // { value: 'principal', label: 'Principal', icon: '🎓' },
   { value: 'teacher', label: 'Teacher', icon: '👨‍🏫' },
-  { value: 'accountant', label: 'Accountant', icon: '💰' },
-  { value: 'librarian', label: 'Librarian', icon: '📚' },
-  { value: 'driver', label: 'Driver', icon: '🚌' },
-  { value: 'peon', label: 'Peon', icon: '👷' },
-  { value: 'security', label: 'Security', icon: '🔒' },
-  { value: 'lab_assistant', label: 'Lab Assistant', icon: '🔬' },
-  { value: 'nurse', label: 'Nurse', icon: '💊' },
-  { value: 'office_staff', label: 'Office Staff', icon: '📋' },
-  { value: 'receptionist', label: 'Receptionist', icon: '📞' },
-  { value: 'cleaner', label: 'Cleaner', icon: '🧹' },
-  { value: 'parent', label: 'Parent', icon: '👨‍👩‍👧' },
+  // { value: 'accountant', label: 'Accountant', icon: '💰' },
+  // { value: 'librarian', label: 'Librarian', icon: '📚' },
+  // { value: 'driver', label: 'Driver', icon: '🚌' },
+  // { value: 'peon', label: 'Peon', icon: '👷' },
+  // { value: 'security', label: 'Security', icon: '🔒' },
+  // { value: 'lab_assistant', label: 'Lab Assistant', icon: '🔬' },
+  // { value: 'nurse', label: 'Nurse', icon: '💊' },
+  // { value: 'office_staff', label: 'Office Staff', icon: '📋' },
+  // { value: 'receptionist', label: 'Receptionist', icon: '📞' },
+  // { value: 'cleaner', label: 'Cleaner', icon: '🧹' },
+  // { value: 'parent', label: 'Parent', icon: '👨‍👩‍👧' },
 ];
 
 const StaffLoginScreen: React.FC<StaffLoginScreenProps> = ({ navigation }) => {
@@ -543,12 +547,12 @@ const StaffLoginScreen: React.FC<StaffLoginScreenProps> = ({ navigation }) => {
               <View style={styles.logoContainer}>
                 <View style={styles.logoCircle}>
                   <Image
-                    source={{uri :'https://res.cloudinary.com/doytvgisa/image/upload/v1761199685/Frame_2_2_eizq6p.png'}}
+                    source={{uri : data.Icon }}
                     style={styles.logoImage}
                     resizeMode="contain"
                   />
                 </View>
-                <Text style={styles.schoolName}>School Management System</Text>
+                <Text style={styles.schoolName}>{data.Name}</Text>
                 <Text style={styles.subtitle}>Staff Portal</Text>
               </View>
             </View>
@@ -652,7 +656,7 @@ const StaffLoginScreen: React.FC<StaffLoginScreenProps> = ({ navigation }) => {
             <View style={styles.helpSection}>
               <Text style={styles.helpText}>Need help? Contact Admin</Text>
               <TouchableOpacity activeOpacity={0.7}>
-                <Text style={styles.contactText}>📞 +91 XXXXXXXXXX</Text>
+                <Text style={styles.contactText}>📞 +91 {data.Contect.Phone}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -660,9 +664,9 @@ const StaffLoginScreen: React.FC<StaffLoginScreenProps> = ({ navigation }) => {
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              © 2025 Rethambal. All rights reserved.
+              © 2026 Rethambal. All rights reserved.
             </Text>
-            <Text style={styles.versionText}>Version 1.0.0</Text>
+            <Text style={styles.versionText}>{DeviceInfo.getVersion()}</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -762,91 +766,7 @@ const StaffLoginScreen: React.FC<StaffLoginScreenProps> = ({ navigation }) => {
               {/* Selection Options */}
               <View style={styles.optionsContainer}>
                 <Text style={styles.optionsTitle}>Select Login Purpose:</Text>
-                
-                <TouchableOpacity
-                  style={[
-                    styles.optionButton,
-                    selectedOption === 'attendance' && styles.optionButtonSelected
-                  ]}
-                  onPress={() => setSelectedOption('attendance')}
-                  disabled={modalLoading}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.optionContent}>
-                    <Text style={styles.optionIcon}>📋</Text>
-                    <View style={styles.optionTextContainer}>
-                      <Text style={[
-                        styles.optionLabel,
-                        selectedOption === 'attendance' && styles.optionLabelSelected
-                      ]}>
-                        Attendance Marking
-                      </Text>
-                      <Text style={styles.optionDescription}>
-                        Mark student and staff attendance
-                      </Text>
-                    </View>
-                  </View>
-                  {selectedOption === 'attendance' && (
-                    <Text style={styles.selectedIcon}>✓</Text>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.optionButton,
-                    selectedOption === 'teaching' && styles.optionButtonSelected
-                  ]}
-                  onPress={() => setSelectedOption('teaching')}
-                  disabled={modalLoading}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.optionContent}>
-                    <Text style={styles.optionIcon}>📚</Text>
-                    <View style={styles.optionTextContainer}>
-                      <Text style={[
-                        styles.optionLabel,
-                        selectedOption === 'teaching' && styles.optionLabelSelected
-                      ]}>
-                        Teaching & Classes
-                      </Text>
-                      <Text style={styles.optionDescription}>
-                        Access class schedules and materials
-                      </Text>
-                    </View>
-                  </View>
-                  {selectedOption === 'teaching' && (
-                    <Text style={styles.selectedIcon}>✓</Text>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.optionButton,
-                    selectedOption === 'administrative' && styles.optionButtonSelected
-                  ]}
-                  onPress={() => setSelectedOption('administrative')}
-                  disabled={modalLoading}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.optionContent}>
-                    <Text style={styles.optionIcon}>💼</Text>
-                    <View style={styles.optionTextContainer}>
-                      <Text style={[
-                        styles.optionLabel,
-                        selectedOption === 'administrative' && styles.optionLabelSelected
-                      ]}>
-                        Administrative Work
-                      </Text>
-                      <Text style={styles.optionDescription}>
-                        Access admin panels and reports
-                      </Text>
-                    </View>
-                  </View>
-                  {selectedOption === 'administrative' && (
-                    <Text style={styles.selectedIcon}>✓</Text>
-                  )}
-                </TouchableOpacity>
-
+                               
                 <TouchableOpacity
                   style={[
                     styles.optionButton,
@@ -925,7 +845,7 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     flex: 1,
-    backgroundColor: '#1e3a8a',
+    backgroundColor: data.style.color.background,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingHorizontal: 20,
   },
@@ -1061,8 +981,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#1e3a8a',
-    borderColor: '#1e3a8a',
+    backgroundColor: data.style.color.background,
+    borderColor: data.style.color.background,
   },
   checkmark: {
     color: '#ffffff',
@@ -1074,7 +994,7 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   loginButton: {
-    backgroundColor: '#1e3a8a',
+    backgroundColor: data.style.color.background,
     height: 56,
     borderRadius: 12,
     justifyContent: 'center',

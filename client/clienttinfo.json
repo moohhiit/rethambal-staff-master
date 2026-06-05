@@ -1,0 +1,20 @@
+{
+  "Name": "Rethambal_Client",
+  "shortName": "Client",
+  "Logo": "https://res.cloudinary.com/doytvgisa/image/upload/v1761199685/Frame_2_2_eizq6p.png",
+  "Icon": "",
+  "Discription": "" ,
+    "Contect" : {
+        "Phone" : 999999999,
+        "Email" : "admin@gmail.com"
+    },
+  
+  "style" : {
+    "color" : {
+        "primary" : "#1e3a8a" , 
+        "background" : "#1e3a8a" ,
+        "textcolor" : " " ,
+        "higlister" : "" 
+    }
+  } 
+}

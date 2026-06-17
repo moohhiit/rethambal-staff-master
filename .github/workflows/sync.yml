@@ -17,7 +17,7 @@ jobs:
           GITLAB_REPO: ${{ secrets.GITLAB_REPO_URL }}
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
-          echo "🚀 Smart Sync Started..."
+          echo "Smart Sync Started..."
 
           # Capture absolute workspace path BEFORE any cd
           WORKSPACE="$GITHUB_WORKSPACE"
@@ -35,7 +35,7 @@ jobs:
             "$WORKSPACE/" "$CLEAN_DIR/"
 
           rm -rf "$CLEAN_DIR/.git"
-          echo "✅ Clean snapshot ready"
+          echo "Clean snapshot ready"
 
           # =========================
           # STEP 2: CLONE GITLAB
@@ -62,7 +62,7 @@ jobs:
           # =========================
           # STEP 4: APPLY NEW SNAPSHOT
           # =========================
-          echo "📦 Applying filtered files..."
+          echo "Applying filtered files..."
           # Use absolute paths — no relative ../clean confusion
           rsync -av "$CLEAN_DIR/" "$GITLAB_DIR/"
 
@@ -72,10 +72,10 @@ jobs:
           cd "$GITLAB_DIR"
           git add .
           if git diff --cached --quiet; then
-            echo "❌ No changes detected"
+            echo "No changes detected"
           else
-            git commit -m "🚀 Smart Sync (filtered files only)"
+            git commit -m "Smart Sync - Github"
             git push origin main
           fi
 
-          echo "🎉 Smart Sync Completed!"
+          echo "Smart Sync Completed!"
